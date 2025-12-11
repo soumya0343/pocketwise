@@ -50,6 +50,14 @@ class ApiClient {
     );
   }
 
+  void setAuthToken(String? token) {
+    if (token != null) {
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+    } else {
+      _dio.options.headers.remove('Authorization');
+    }
+  }
+
   Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {
     print('[ApiClient.get] Making request to: ${_dio.options.baseUrl}$path');
     return _dio.get(path, queryParameters: queryParameters);
@@ -57,5 +65,13 @@ class ApiClient {
 
   Future<Response> post(String path, {dynamic data}) {
     return _dio.post(path, data: data);
+  }
+
+  Future<Response> put(String path, {dynamic data}) {
+    return _dio.put(path, data: data);
+  }
+
+  Future<Response> delete(String path) {
+    return _dio.delete(path);
   }
 }
