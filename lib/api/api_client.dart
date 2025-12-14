@@ -8,10 +8,13 @@ class ApiClient {
   // For iOS simulator use localhost
   // For physical device use your machine IP (e.g. http://192.168.1.42:4000)
   String get baseUrl {
-    // Temporarily hardcoded for iOS simulator - change back to platform detection after testing
-    // For iOS simulator, use 127.0.0.1 (sometimes localhost doesn't resolve correctly)
-    // For Android emulator, use http://10.0.2.2:4000
-    return 'http://127.0.0.1:4000';
+    // Platform detection for base URL
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:4000';
+    } else {
+      // iOS simulator or other platforms
+      return 'http://127.0.0.1:4000';
+    }
 
     // Original platform detection code (uncomment after verifying it works):
     // if (defaultTargetPlatform == TargetPlatform.android) {

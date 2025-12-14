@@ -1,30 +1,50 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:pocketwise/main.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pocketwise/api/api_client.dart';
+import 'package:pocketwise/repositories/auth_repository.dart';
+import 'package:pocketwise/repositories/data_repository.dart';
+import 'package:pocketwise/blocs/auth/auth_bloc.dart';
+import 'package:pocketwise/blocs/auth/auth_event.dart';
+import 'package:pocketwise/blocs/auth/auth_state.dart';
+import 'package:pocketwise/blocs/transaction/transaction_bloc.dart';
+import 'package:pocketwise/blocs/goal/goal_bloc.dart';
+import 'package:pocketwise/blocs/summary/summary_bloc.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('App starts with login screen', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    //await tester.pumpWidget(const PocketWiseTestApp());
+    final apiClient = ApiClient();
+    final authRepository = AuthRepository(apiClient);
+    final dataRepository = DataRepository(apiClient);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) =>
+                AuthBloc(authRepository, apiClient)
+                  ..add(const AuthCheckRequested()),
+          ),
+          BlocProvider(create: (_) => TransactionBloc(dataRepository)),
+          BlocProvider(create: (_) => GoalBloc(dataRepository)),
+          BlocProvider(create: (_) => SummaryBloc(dataRepository)),
+        ],
+        child: MaterialApp(
+          home: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              if (state is AuthAuthenticated) {
+                return const Scaffold(body: Text('Dashboard'));
+              } else {
+                return const Scaffold(body: Text('Login'));
+              }
+            },
+          ),
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that login screen is shown (when not authenticated)
+    expect(find.text('Login'), findsOneWidget);
   });
 }

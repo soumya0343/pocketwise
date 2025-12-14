@@ -9,7 +9,12 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final ApiClient _apiClient;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
 
   AuthBloc(this._authRepository, this._apiClient) : super(AuthInitial()) {
     on<AuthLoginRequested>(_onLoginRequested);
@@ -76,12 +81,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
-    final token = await _storage.read(key: 'token');
-    if (token != null) {
-      _apiClient.setAuthToken(token);
-      // In a real app, you might want to validate the token with the server
-      emit(AuthAuthenticated(User(id: '', name: '', email: ''), token));
-    } else {
+    try {
+      final token = await _storage.read(key: 'token');
+      if (token != null && token.isNotEmpty) {
+        _apiClient.setAuthToken(token);
+        // In a real app, you might want to validate the token with the server
+        emit(AuthAuthenticated(User(id: '', name: '', email: ''), token));
+      } else {
+        emit(AuthUnauthenticated());
+      }
+    } catch (e) {
+      print('Error checking auth: $e');
       emit(AuthUnauthenticated());
     }
   }

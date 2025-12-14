@@ -13,6 +13,7 @@ import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const PocketWiseApp());
 }
 
@@ -41,7 +42,11 @@ class PocketWiseApp extends StatelessWidget {
         theme: ThemeData(primarySwatch: Colors.teal, useMaterial3: true),
         home: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
-            if (state is AuthAuthenticated) {
+            if (state is AuthLoading) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            } else if (state is AuthAuthenticated) {
               return const DashboardScreen();
             } else {
               return const LoginScreen();
